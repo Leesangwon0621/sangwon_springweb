@@ -1,5 +1,6 @@
 package org.sangwon.chap11;
 
+
 import java.util.List;
 
 public interface MemberDao {
@@ -28,4 +29,6 @@ public interface MemberDao {
 	 * 회원 수
 	 */
 	int countAll();
+	
+	public Member selectByLogin(String email, String password);
 }
