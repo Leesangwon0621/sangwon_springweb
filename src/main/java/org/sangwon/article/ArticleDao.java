@@ -2,11 +2,14 @@ package org.sangwon.article;
 
 import java.util.List;
 
+import org.sangwon.chap11.Member;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 @Repository
 public class ArticleDao {
@@ -18,6 +21,16 @@ public class ArticleDao {
 	static final String GET_ARTICLE = "select articleId, title, content, userId, name, left(cdate,16) cdate, udate from article where articleId=?";
 
 	static final String ADD_ARTICLE = "insert article(title,content,userId,name) values(?,?,?,?)";
+	
+	/**
+	 * 글 수정하는 sql
+	 */
+	static final String UPDATE_ARTICLE = "UPDATE article SET title=?, content=? WHERE (articleId, userId)=(?,?)";
+
+	/**
+	 * 글 삭제하는 sql
+	 */
+	static final String DELETE_ARTICLE = "DELETE FROM article WHERE (articleId, userId)=(?,?)";
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
@@ -55,4 +68,6 @@ public class ArticleDao {
 		return jdbcTemplate.update(ADD_ARTICLE, article.getTitle(),
 				article.getContent(), article.getUserId(), article.getName());
 	}
+	
 }
+
