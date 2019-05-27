@@ -117,6 +117,6 @@ public class ArticleController {
 			return "redirect:/app/article/list";
 		}
 		else 
-			return "/article/fail";
+			return "/article/reviseFail";
 	}
 }
