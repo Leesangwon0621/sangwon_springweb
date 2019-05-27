@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 @Controller
 public class ArticleController {
 
+
+	
 	@Autowired
 	ArticleDao articleDao;
 
@@ -61,12 +63,60 @@ public class ArticleController {
 	 * 글 등록
 	 */
 	@PostMapping("/article/add")
-	public String articleAdd(Article article, @SessionAttribute("MEMBER") Member member) {
-		
-		
+	public String articleAdd(Article article, @SessionAttribute("MEMBER") Member member ) {//HttpSession session
+		/*// 세션에 MEMBER가 없을 경우 로그인 화면으로
+		Object memberObj = session.getAttribute("MEMBER");
+		if (memberObj == null)
+			// 세션에 MEMBER가 없을 경우 로그인 화면으로
+			return "login/loginForm";
+		Member member = (Member) memberObj;*/
 		article.setUserId(member.getMemberId());
 		article.setName(member.getName());
 		articleDao.addArticle(article);
 		return "redirect:/app/article/list";
+	}
+	
+	/**
+	 * 글 수정 화면
+	 */
+	@GetMapping("/article/revise")
+	public String revise(@RequestParam("articleId") String articleId,
+			@RequestParam("userId") String userId,
+			Model model,
+			@SessionAttribute("MEMBER") Member member) {		
+		if(userId.equals(member.getMemberId())) {
+			Article article = articleDao.getArticle(articleId);
+			model.addAttribute("article", article);
+			return "/article/revise";
+		}
+		else 
+			return "/article/fail";
+	}
+	
+	/**
+	 * 글 수정
+	 */
+	@PostMapping("/article/change")
+	public String change(Article article,
+			@SessionAttribute("MEMBER") Member member ) {
+		article.setUserId(member.getMemberId());
+		article.setName(member.getName());
+		articleDao.updateArticle(article);
+		return "redirect:/app/article/list";
+	}
+	
+	/**
+	 * 글 삭제
+	 */
+	@GetMapping("/article/delete")
+	public String delete(@RequestParam("articleId") String articleId,
+			@RequestParam("userId") String userId,
+			@SessionAttribute("MEMBER") Member member) {		
+		if(userId.equals(member.getMemberId())) {
+			articleDao.deleteArticle(articleId);		
+			return "redirect:/app/article/list";
+		}
+		else 
+			return "/article/fail";
 	}
 }
