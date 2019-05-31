@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sangwon.chap11.Member;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
 
-
 @Controller
 public class ArticleController {
 
@@ -23,6 +24,8 @@ public class ArticleController {
 	@Autowired
 	ArticleDao articleDao;
 
+	static final Logger logger = LogManager.getLogger();
+	
 	/**
 	 * 글 목록
 	 */
@@ -76,47 +79,55 @@ public class ArticleController {
 		return "redirect:/app/article/list";
 	}
 	
+
 	/**
 	 * 글 수정 화면
 	 */
-	@GetMapping("/article/revise")
-	public String revise(@RequestParam("articleId") String articleId,
-			@RequestParam("userId") String userId,
-			Model model,
-			@SessionAttribute("MEMBER") Member member) {		
-		if(userId.equals(member.getMemberId())) {
-			Article article = articleDao.getArticle(articleId);
-			model.addAttribute("article", article);
-			return "/article/revise";
-		}
-		else 
-			return "/article/fail";
+	@GetMapping("/article/updateForm")
+	public void updateForm(@RequestParam("articleId") String articleId,
+			@SessionAttribute("MEMBER") Member member, Model model) {
+		Article article = articleDao.getArticle(articleId);
+
+		// 권한 체크 : 세션의 memberId와 글의 userId를 비교
+		if (!member.getMemberId().equals(article.getUserId()))
+			// 자신의 글이 아니면
+			throw new RuntimeException("No Authority!");
+
+		model.addAttribute("article", article);
 	}
-	
+
 	/**
 	 * 글 수정
 	 */
-	@PostMapping("/article/change")
-	public String change(Article article,
-			@SessionAttribute("MEMBER") Member member ) {
+	@PostMapping("/article/update")
+	public String update(Article article,
+			@SessionAttribute("MEMBER") Member member) {
 		article.setUserId(member.getMemberId());
-		article.setName(member.getName());
-		articleDao.updateArticle(article);
-		return "redirect:/app/article/list";
+		int updatedRows = articleDao.updateArticle(article);
+
+		// 권한 체크 : 글이 수정되었는지 확인
+		if (updatedRows == 0)
+			// 글이 수정되지 않음. 자신이 쓴 글이 아님
+			throw new RuntimeException("No Authority!");
+
+		return "redirect:/app/article/view?articleId=" + article.getArticleId();
 	}
-	
+
 	/**
 	 * 글 삭제
 	 */
 	@GetMapping("/article/delete")
 	public String delete(@RequestParam("articleId") String articleId,
-			@RequestParam("userId") String userId,
-			@SessionAttribute("MEMBER") Member member) {		
-		if(userId.equals(member.getMemberId())) {
-			articleDao.deleteArticle(articleId);		
-			return "redirect:/app/article/list";
-		}
-		else 
-			return "/article/reviseFail";
-	}
+			@SessionAttribute("MEMBER") Member member) {
+		int updatedRows = articleDao.deleteArticle(articleId,
+				member.getMemberId());
+
+		// 권한 체크 : 글이 삭제되었는지 확인
+		if (updatedRows == 0)
+			// 글이 삭제되지 않음. 자신이 쓴 글이 아님
+			throw new RuntimeException("No Authority!");
+
+		logger.debug("글을 삭제했습니다. articleId={}", articleId);
+		return "redirect:/app/article/list";
+}
 }
