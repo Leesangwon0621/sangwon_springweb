@@ -2,6 +2,8 @@ package org.sangwon.letter;
 
 import java.util.List;
 
+import javax.servlet.http.HttpSession;
+
 import org.sangwon.chap11.Member;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,30 +15,39 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 
 @Controller
 public class LetterController {
-	
+
+
 	@Autowired
 	LetterDao letterDao;
-	
+
 	/**
 	 * 받은 목록
 	 */
-	@GetMapping("/letter/listOfRecevier")
+	@GetMapping("/letter/listOfReceiver")
 	public void listOfReceiver(@SessionAttribute("MEMBER") Member member,
+			@RequestParam("receiverId") String receiverId,
 			Model model) {
-		List<Letter> letters = letterDao.listLettersOfReceiver(member.getMemberId());
-		model.addAttribute("letters", letters);
+		if (member.getMemberId().equals(receiverId)) {
+			List<Letter> letters = letterDao
+					.listLettersOfReceiver(receiverId);
+			model.addAttribute("letters", letters);			
+		}
 	}
-	
+
 	/**
 	 * 보낸 목록
 	 */
 	@GetMapping("/letter/listOfSender")
 	public void listOfSender(@SessionAttribute("MEMBER") Member member,
+			@RequestParam("senderId") String senderId,
 			Model model) {
-		List<Letter> letters = letterDao.listLettersOfReceiver(member.getMemberId());
-		model.addAttribute("letters", letters);
+		if (member.getMemberId().equals(senderId)) {
+			List<Letter> letters = letterDao
+					.listLettersOfSender(senderId);
+			model.addAttribute("letters", letters);
+		}
 	}
-	
+
 	/**
 	 * 보기
 	 */
@@ -48,15 +59,21 @@ public class LetterController {
 	}
 
 	/**
+	 * 편지쓰기화면
+	 */
+	@GetMapping("/letter/addForm")
+	public void addForm(HttpSession session) {		
+	}
+
+	/**
 	 * 편지 저장
 	 */
 	@PostMapping("/letter/add")
-	public String add(Letter letter,
-			@SessionAttribute("MEMBER") Member member) {
+	public String add(Letter letter, @SessionAttribute("MEMBER") Member member) {
 		letter.setSenderId(member.getMemberId());
 		letter.setSenderName(member.getName());
 		letterDao.addLetter(letter);
-		return "redirect:/app/letter/listOfSender";
+		return "redirect:/app/members";
 	}
 
 	/**
@@ -64,17 +81,13 @@ public class LetterController {
 	 */
 	@GetMapping("/letter/delete")
 	public String delete(@RequestParam("letterId") String letterId,
+			@RequestParam("senderId") String senderId,
+			@RequestParam("receiverId") String receiverId,
 			@SessionAttribute("MEMBER") Member member) {
-		int updatedRows = letterDao.deleteLetter(letterId,
-				member.getMemberId());
-		if (updatedRows == 0)
-			throw new RuntimeException("No Authority!");
-
-		return "redirect:/보낸목록 또는 받은목록";
+		if (member.getMemberId().equals(senderId))
+			letterDao.deleteLetter(letterId, senderId);
+		else if(member.getMemberId().equals(receiverId))
+			letterDao.deleteLetter(letterId, receiverId);
+		return "redirect:/app/members";	
 	}
-	
-	
-	
-	
-
 }

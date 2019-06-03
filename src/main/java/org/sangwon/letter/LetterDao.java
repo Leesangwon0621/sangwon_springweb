@@ -10,11 +10,14 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class LetterDao {
-
 	static final String LIST_LETTERS_OF_SEDER = "select letterId,title,receiverId,receiverName,cdate from letter where senderId=?";
+	
 	static final String LIST_LETTERS_OF_RECEIVER = "select letterId,title,senderId,senderName,cdate from letter where receiverId=?";
+	
 	static final String ADD_LETTER = "insert letter(title,content,senderId,senderName,receiverId,receiverName) values(?,?,?,?,?,?);";
+	
 	static final String GET_LETTER = "select letterId,title,content,senderId,senderName,receiverId,receiverName,cdate from letter where letterId=? and (senderId=? or receiverId=?)";
+	
 	static final String DELETE_LETTER = "delete from letter where letterId=? and (senderId=? or receiverId=?)";
 
 	@Autowired
@@ -61,6 +64,6 @@ public class LetterDao {
 	 * 삭제
 	 */
 	public int deleteLetter(String letterId, String memberId) {
-		return jdbcTemplate.update(GET_LETTER, letterId, memberId, memberId);
+		return jdbcTemplate.update(DELETE_LETTER, letterId, memberId, memberId);
 	}
 }
